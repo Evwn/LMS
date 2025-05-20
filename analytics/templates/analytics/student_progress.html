@@ -1,0 +1,73 @@
+{% extends 'analytics/base_analytics.html' %}
+{% load static %}
+
+{% block analytics_content %}
+<div class="student-progress-container">
+    <h2>Student Progress Analytics</h2>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Students</h5>
+                    <p class="card-text display-4">{{ total_students }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Average Completion Rate</h5>
+                    <p class="card-text display-4">{{ average_completion_rate|floatformat:1 }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Average Grade</h5>
+                    <p class="card-text display-4">{{ average_grade|floatformat:1 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Progress Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Student Progress Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Total Courses</th>
+                            <th>Completed Courses</th>
+                            <th>Completion Rate</th>
+                            <th>Average Grade</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for progress in student_progress %}
+                        <tr>
+                            <td>{{ progress.student.get_full_name }}</td>
+                            <td>{{ progress.total_courses }}</td>
+                            <td>{{ progress.completed_courses }}</td>
+                            <td>{{ progress.completion_rate|floatformat:1 }}%</td>
+                            <td>{{ progress.average_grade }}</td>
+                            <td>
+                                <a href="{% url 'analytics:student_progress_report' progress.student.id %}" class="btn btn-sm btn-primary">View Details</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

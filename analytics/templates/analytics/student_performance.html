@@ -1,0 +1,216 @@
+{% extends 'analytics/base_analytics.html' %}
+{% load static %}
+
+{% block analytics_content %}
+<div class="student-performance-container">
+    <h2>Student Performance Analytics</h2>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="semester" class="form-label">Semester</label>
+                    <select name="semester" id="semester" class="form-select">
+                        <option value="">All Semesters</option>
+                        {% for semester in semesters %}
+                        <option value="{{ semester }}" {% if semester == selected_semester %}selected{% endif %}>
+                            {{ semester }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="academic_year" class="form-label">Academic Year</label>
+                    <select name="academic_year" id="academic_year" class="form-select">
+                        <option value="">All Years</option>
+                        {% for year in academic_years %}
+                        <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
+                            {{ year }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="course" class="form-label">Course</label>
+                    <select name="course" id="course" class="form-select">
+                        <option value="">All Courses</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}" {% if course.id|stringformat:"i" == selected_course %}selected{% endif %}>
+                            {{ course.title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary d-block">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Average Quiz Score</h5>
+                    <p class="card-text display-4">{{ avg_quiz|floatformat:1 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Average Assignment Score</h5>
+                    <p class="card-text display-4">{{ avg_assignment|floatformat:1 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Average Attendance</h5>
+                    <p class="card-text display-4">{{ avg_attendance|floatformat:1 }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Overall Average</h5>
+                    <p class="card-text display-4">{{ avg_overall|floatformat:1 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Student Performance Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Course</th>
+                            <th>Quiz Average</th>
+                            <th>Assignment Average</th>
+                            <th>Attendance Rate</th>
+                            <th>Overall Grade</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for performance in performances %}
+                        <tr>
+                            <td>{{ performance.student.get_full_name }}</td>
+                            <td>{{ performance.course.title }}</td>
+                            <td>{{ performance.quiz_average|floatformat:1 }}</td>
+                            <td>{{ performance.assignment_average|floatformat:1 }}</td>
+                            <td>{{ performance.attendance_rate|floatformat:1 }}%</td>
+                            <td>{{ performance.overall_grade|floatformat:1 }}</td>
+                            <td>
+                                <a href="{% url 'analytics:student_progress_report' performance.student.id %}" class="btn btn-sm btn-primary">View Progress</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_year %}&academic_year={{ selected_year }}{% endif %}{% if selected_course %}&course={{ selected_course }}{% endif %}">&laquo; First</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_year %}&academic_year={{ selected_year }}{% endif %}{% if selected_course %}&course={{ selected_course }}{% endif %}">Previous</a>
+            </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_year %}&academic_year={{ selected_year }}{% endif %}{% if selected_course %}&course={{ selected_course }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_year %}&academic_year={{ selected_year }}{% endif %}{% if selected_course %}&course={{ selected_course }}{% endif %}">Last &raquo;</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Performance Trends Chart
+    const ctx = document.getElementById('performanceTrendsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ performance_labels|safe }},
+            datasets: [{
+                label: 'Quiz Average',
+                data: {{ quiz_trends|safe }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'Assignment Average',
+                data: {{ assignment_trends|safe }},
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1
+            }, {
+                label: 'Attendance Rate',
+                data: {{ attendance_trends|safe }},
+                borderColor: 'rgb(54, 162, 235)',
+                tension: 0.1
+            }, {
+                label: 'Overall Grade',
+                data: {{ overall_trends|safe }},
+                borderColor: 'rgb(153, 102, 255)',
+                tension: 0.1
+            }, {
+                label: 'Participation Score',
+                data: {{ participation_trends|safe }},
+                borderColor: 'rgb(255, 159, 64)',
+                tension: 0.1
+            }, {
+                label: 'Resources Accessed',
+                data: {{ resources_trends|safe }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 

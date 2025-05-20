@@ -1,0 +1,274 @@
+{% extends 'analytics/base_analytics.html' %}
+{% load static %}
+
+{% block analytics_content %}
+<div class="course-progress-container">
+    <h2>Course Progress</h2>
+
+    <div class="card mb-4">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">{{ current_session.session }} Session Progress</h5>
+                <span class="badge bg-info">{{ session_days_remaining }} days remaining</span>
+            </div>
+            
+            <!-- Fixed progress bar with obvious styling -->
+            <div style="height: 24px; width: 100%; background-color: #f5f5f5; border-radius: 4px; overflow: hidden; border: 1px solid #ddd;">
+                <div style="height: 100%; width: {{ session_progress }}%; 
+                    background-color: {% if session_progress > 75 %}#dc3545{% elif session_progress > 50 %}#ffc107{% else %}#28a745{% endif %}; 
+                    text-align: center; color: white; line-height: 24px; font-weight: bold;">
+                    {{ session_progress }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="semester" class="form-label">Semester</label>
+                    <select name="semester" id="semester" class="form-select">
+                        <option value="">All Semesters</option>
+                        {% for semester in semesters %}
+                        <option value="{{ semester }}" {% if selected_semester == semester %}selected{% endif %}>
+                            {{ semester }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="academic_year" class="form-label">Academic Year</label>
+                    <select name="academic_year" id="academic_year" class="form-select">
+                        <option value="">All Years</option>
+                        {% for year in academic_years %}
+                        <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>
+                            {{ year }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="course" class="form-label">Course</label>
+                    <select name="course" id="course" class="form-select">
+                        <option value="">All Courses</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}" {% if selected_course == course.id %}selected{% endif %}>
+                            {{ course.title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Progress Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Enrollments</h5>
+                    <p class="card-text display-4">{{ total_enrollments|default:"0" }}</p>
+                    <small class="text-muted">Enrolled students across all displayed courses</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Average Completion Rate</h5>
+                    <p class="card-text display-4">{{ avg_completion_rate|default:"0" }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Average Dropout Rate</h5>
+                    <p class="card-text display-4">{{ avg_dropout_rate|default:"0" }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Resource Usage</h5>
+                    <p class="card-text display-4">{{ avg_resource_usage|default:"0" }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Enrollment Count</th>
+                            <th>Completion Rate</th>
+                            <th>Dropout Rate</th>
+                            <th>Resource Usage</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for progress in progresses %}
+                        <tr>
+                            <td>{{ progress.course }}</td>
+                            <td>{{ progress.enrollment_count|default:0 }}</td>
+                            <td>{{ progress.completion_rate|default:0 }}%</td>
+                            <td>{{ progress.dropout_rate|default:0 }}%</td>
+                            <td>{{ progress.resource_usage|default:0 }}%</td>
+                            <td>
+                                <a href="{% url 'analytics:course_performance_report' course_id=progress.course.id %}" 
+                                   class="btn btn-sm btn-info">View Report</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No course progress data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Charts -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Course Enrollment Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="enrollmentTrendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Completion vs Dropout by Course</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="completionDropoutChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Enrollment Chart - Changed to bar chart for better course comparison
+    const enrollmentCtx = document.getElementById('enrollmentTrendsChart').getContext('2d');
+    new Chart(enrollmentCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ trend_labels|safe }},
+            datasets: [{
+                label: 'Enrollments',
+                data: {{ enrollment_trends|safe }},
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',  // Horizontal bar chart for better readability with many courses
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Students'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Course Enrollment Comparison',
+                    font: {
+                        size: 16
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Enrollments: ${context.raw}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Completion vs Dropout Chart
+    const completionCtx = document.getElementById('completionDropoutChart').getContext('2d');
+    new Chart(completionCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ trend_labels|safe }},
+            datasets: [{
+                label: 'Completion Rate',
+                data: {{ completion_trends|safe }},
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1
+            }, {
+                label: 'Dropout Rate',
+                data: {{ dropout_trends|safe }},
+                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',  // Horizontal bar chart for better readability with many courses
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Completion vs Dropout Rates by Course',
+                    font: {
+                        size: 16
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 

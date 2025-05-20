@@ -1,0 +1,183 @@
+{% extends 'analytics/base_analytics.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'Student Progress Report' %} | {% trans 'LMS Analytics' %}{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-graduate me-2"></i>
+                        {% trans 'Student Progress Report' %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if course %}
+                    <div class="mb-4">
+                        <h4>{{ student.get_full_name }} - {{ course.title }}</h4>
+                        <p class="text-muted">
+                            {% trans 'Semester' %}: {{ progress_reports.first.semester }} | 
+                            {% trans 'Academic Year' %}: {{ progress_reports.first.academic_year }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if request.user.is_staff or request.user.is_lecturer %}
+                        {% if student and course %}
+                        <div class="mb-4">
+                            <a href="{% url 'analytics:generate_progress_report' student.id course.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>{% trans 'Generate New Report' %}
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if ml_insights %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-brain me-2"></i>{% trans 'AI-Powered Insights' %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">{% trans 'Learning Analysis' %}</h6>
+                                    <div class="mb-4">
+                                        <h6>{% trans 'Learning Style' %}</h6>
+                                        <p>{{ ml_insights.learning_style }}</p>
+                                    </div>
+                                    <div class="mb-4">
+                                        <h6>{% trans 'Performance Trend' %}</h6>
+                                        <p>{{ ml_insights.performance_trend }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">{% trans 'Personalized Recommendations' %}</h6>
+                                    {% for rec in ml_insights.recommendations %}
+                                    <div class="mb-3">
+                                        <h6 class="text-{{ rec.priority }}">
+                                            {{ rec.area }}
+                                        </h6>
+                                        <p>{{ rec.recommendation }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if learning_patterns %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>{% trans 'Learning Patterns' %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for pattern in learning_patterns %}
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6>{{ pattern.pattern_type }}</h6>
+                                            <p class="text-muted">{% trans 'Students in this pattern' %}: {{ pattern.count }}</p>
+                                            <ul class="list-unstyled">
+                                                <li>{% trans 'Avg Quiz' %}: {{ pattern.avg_quiz|floatformat:1 }}%</li>
+                                                <li>{% trans 'Avg Assignment' %}: {{ pattern.avg_assignment|floatformat:1 }}%</li>
+                                                <li>{% trans 'Avg Attendance' %}: {{ pattern.avg_attendance|floatformat:1 }}%</li>
+                                                <li>{% trans 'Avg Participation' %}: {{ pattern.avg_participation|floatformat:1 }}%</li>
+                                                <li>{% trans 'Avg Grade' %}: {{ pattern.avg_grade|floatformat:1 }}%</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% for report in progress_reports %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                {% trans 'Report Generated' %}: {{ report.created_at|date:"F d, Y" }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">{% trans 'Academic Performance' %}</h6>
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th>{% trans 'Attendance Rate' %}</th>
+                                            <td>{{ report.attendance_rate }}%</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans 'Assignment Completion' %}</th>
+                                            <td>{{ report.assignment_completion }}%</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans 'Quiz Scores' %}</th>
+                                            <td>{{ report.quiz_scores }}%</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans 'Midterm Score' %}</th>
+                                            <td>{{ report.midterm_score }}%</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans 'Final Score' %}</th>
+                                            <td>{{ report.final_score }}%</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans 'Overall Grade' %}</th>
+                                            <td>{{ report.overall_grade }}%</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans 'Participation Level' %}</th>
+                                            <td>{{ report.get_participation_level_display }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">{% trans 'Analysis' %}</h6>
+                                    <div class="mb-4">
+                                        <h6>{% trans 'Strengths' %}</h6>
+                                        <p>{{ report.strengths }}</p>
+                                    </div>
+                                    <div class="mb-4">
+                                        <h6>{% trans 'Areas for Improvement' %}</h6>
+                                        <p>{{ report.areas_for_improvement }}</p>
+                                    </div>
+                                    <div class="mb-4">
+                                        <h6>{% trans 'Recommendations' %}</h6>
+                                        <p>{{ report.recommendations }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans 'No progress reports available for this student.' %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    // Add any additional JavaScript for charts or interactivity here
+</script>
+{% endblock extra_js %} 

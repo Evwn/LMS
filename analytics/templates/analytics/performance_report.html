@@ -1,0 +1,312 @@
+{% extends 'analytics/base_analytics.html' %}
+{% load static %}
+
+{% block analytics_content %}
+<div class="performance-report-container">
+    <h2>Performance Report</h2>
+
+    <!-- Report Header -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Report Details</h4>
+                    <p><strong>Generated:</strong> {{ generated_date }}</p>
+                    <p><strong>Period:</strong> {{ period }}</p>
+                    {% if student %}
+                    <p><strong>Student:</strong> {{ student.get_full_name }}</p>
+                    {% endif %}
+                    {% if lecturer %}
+                    <p><strong>Lecturer:</strong> {{ lecturer.get_full_name }}</p>
+                    {% endif %}
+                    {% if course %}
+                    <p><strong>Course:</strong> {{ course.title }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print Report
+                    </button>
+                    <button class="btn btn-success" onclick="exportToPDF()">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="row mb-4">
+        {% if student %}
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quiz Average</h5>
+                    <p class="card-text display-4">{{ quiz_average }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Assignment Average</h5>
+                    <p class="card-text display-4">{{ assignment_average }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Attendance Rate</h5>
+                    <p class="card-text display-4">{{ attendance_rate }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Overall Grade</h5>
+                    <p class="card-text display-4">{{ overall_grade }}%</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if lecturer %}
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Student Satisfaction</h5>
+                    <p class="card-text display-4">{{ student_satisfaction }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Course Completion</h5>
+                    <p class="card-text display-4">{{ course_completion_rate }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Avg Student Grade</h5>
+                    <p class="card-text display-4">{{ average_student_grade }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Resource Usage</h5>
+                    <p class="card-text display-4">{{ resource_utilization }}%</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if course %}
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Enrollment Count</h5>
+                    <p class="card-text display-4">{{ enrollment_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Completion Rate</h5>
+                    <p class="card-text display-4">{{ completion_rate }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Dropout Rate</h5>
+                    <p class="card-text display-4">{{ dropout_rate }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Resource Usage</h5>
+                    <p class="card-text display-4">{{ resource_usage }}%</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Detailed Performance -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Performance Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceTrendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Performance Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analysis -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Detailed Analysis</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Trend</th>
+                            <th>Analysis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in detailed_metrics %}
+                        <tr>
+                            <td>{{ metric.name }}</td>
+                            <td>{{ metric.value }}</td>
+                            <td>
+                                {% if metric.trend > 0 %}
+                                <span class="text-success">↑ {{ metric.trend }}%</span>
+                                {% elif metric.trend < 0 %}
+                                <span class="text-danger">↓ {{ metric.trend|cut:"-" }}%</span>
+                                {% else %}
+                                <span class="text-muted">→</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ metric.analysis }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Recommendations</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for recommendation in recommendations %}
+                <li class="list-group-item">
+                    <h6 class="mb-1">{{ recommendation.title }}</h6>
+                    <p class="mb-1">{{ recommendation.description }}</p>
+                    <small class="text-muted">Priority: {{ recommendation.priority }}</small>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    // Performance Trends Chart
+    const trendsCtx = document.getElementById('performanceTrendsChart').getContext('2d');
+    new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: {{ trend_labels|safe }},
+            datasets: {{ trend_datasets|safe }}
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Performance Distribution Chart
+    const distributionCtx = document.getElementById('performanceDistributionChart').getContext('2d');
+    new Chart(distributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ distribution_labels|safe }},
+            datasets: [{
+                data: {{ distribution_data|safe }},
+                backgroundColor: [
+                    'rgb(75, 192, 192)',
+                    'rgb(255, 205, 86)',
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+
+    // Export to PDF function
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        
+        // Create a new PDF document
+        const doc = new jsPDF();
+        
+        // Get the report container
+        const reportElement = document.querySelector('.performance-report-container');
+        
+        // Use html2canvas to render the report
+        html2canvas(reportElement).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 295; // A4 height in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+            
+            // Add the image to the PDF
+            doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            
+            // Add additional pages if needed
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            
+            // Save the PDF
+            doc.save('performance_report.pdf');
+        });
+    }
+</script>
+{% endblock %} 

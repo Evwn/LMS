@@ -1,0 +1,198 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>{% block title %}Lms Analytics{% endblock title %}</title>
+
+    <link rel="shortcut icon" href="{% static 'img/favicon.png' %}" type="image/x-icon">
+
+    <!-- Fontawesome icons -->
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/fontawesome-6.5.1/css/all.min.css' %}">
+
+    <!-- Bootstrap5 -->
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/bootstrap-5.3.2/css/bootstrap.min.css' %}">
+
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.min.css' %}">
+
+    {% block header %}{% endblock %}
+    <style>
+        .dashboard-container {
+        background-color: #f5f7fa;
+        padding: 20px;
+        border-radius: 8px;
+        }
+        
+        .btn-custom-primary {
+        background-color: #56e0e0;
+        border-color: #56e0e0;
+        color: white;
+        }
+        
+        .btn-custom-secondary {
+        background-color: #fdae1c;
+        border-color: #fdae1c;
+        color: white;
+        }
+        
+        .btn-custom-tertiary {
+        background-color: #cb1fff;
+        border-color: #cb1fff;
+        color: white;
+        }
+        
+        .btn-custom-primary:hover {
+        background-color: #45c4c4;
+        border-color: #45c4c4;
+        }
+        
+        .btn-custom-secondary:hover {
+        background-color: #d99614;
+        border-color: #d99614;
+        }
+        
+        .btn-custom-tertiary:hover {
+        background-color: #ac17d9;
+        border-color: #ac17d9;
+        }
+
+        /* Submenu Styles */
+        .submenu {
+            position: relative;
+        }
+
+        .submenu > a {
+            padding-left: 20px;
+        }
+
+        .submenu ul {
+            display: none;
+            list-style: none;
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .submenu.active ul {
+            display: block;
+        }
+
+        .submenu ul li {
+            padding: 5px 0;
+        }
+
+        .submenu ul li a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.9em;
+            display: block;
+            padding: 5px 10px;
+        }
+
+        .submenu ul li a:hover {
+            color: #007bff;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .submenu ul li a i {
+            margin-right: 5px;
+            width: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    {% block sidebar %}
+        {% include 'sidebar.html' %}
+    {% endblock %}
+
+    {% block maincontent %}
+    <div id="main">
+        {% block topbar %}
+            {% include 'navbar.html' %}
+        {% endblock %}
+
+        <div class="container-fluid" id="main-content">
+            {% block content %}{% endblock content %}
+        </div>
+
+    </div>
+    {% endblock %}
+    <script src="{% url 'javascript-catalog' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/jquery-3.7.1/jquery-3.7.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/bootstrap-5.3.2/js/bootstrap.bundle.min.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+
+    {% block js %}
+    {% endblock js %}
+
+    <script>
+        function toggleSubmenu(element) {
+            console.log('toggleSubmenu called', element);
+            element.preventDefault();
+            element.stopPropagation();
+            
+            const parent = element.target.closest('.submenu');
+            console.log('Parent element:', parent);
+            const submenu = parent.querySelector('.submenu-content');
+            console.log('Submenu element:', submenu);
+            
+            if (submenu) {
+                // Check both inline style and computed style
+                const inlineDisplay = submenu.style.display;
+                const computedDisplay = window.getComputedStyle(submenu).display;
+                console.log('Inline display:', inlineDisplay);
+                console.log('Computed display:', computedDisplay);
+                
+                // If either style indicates the submenu is hidden, show it
+                const isHidden = !inlineDisplay || inlineDisplay === 'none' || computedDisplay === 'none';
+                console.log('Is hidden:', isHidden);
+                
+                if (isHidden) {
+                    submenu.style.display = 'block';
+                    parent.classList.add('active');
+                    console.log('Submenu shown');
+                } else {
+                    submenu.style.display = 'none';
+                    parent.classList.remove('active');
+                    console.log('Submenu hidden');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            
+            // Add click handlers to all submenu toggles
+            const submenuToggles = document.querySelectorAll('.submenu-toggle');
+            console.log('Found submenu toggles:', submenuToggles.length);
+            
+            submenuToggles.forEach(toggle => {
+                console.log('Adding click handler to:', toggle);
+                toggle.addEventListener('click', toggleSubmenu);
+            });
+
+            // Handle submenu item clicks
+            const submenuItems = document.querySelectorAll('.course-report-link');
+            console.log('Found submenu items:', submenuItems.length);
+            
+            submenuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    console.log('Submenu item clicked:', e.target);
+                    e.stopPropagation();
+                    submenuItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

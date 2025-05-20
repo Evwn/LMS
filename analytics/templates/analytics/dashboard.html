@@ -1,0 +1,231 @@
+{% extends 'analytics/base_analytics.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block analytics_content %}
+<div class="analytics-dashboard">
+    <h2>Analytics Dashboard</h2>
+
+    {% if current_session %}
+    <!-- Session Progress Bar -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">{{ current_session }} {% trans 'Session Progress' %}: {{ session_days_remaining }} {% trans 'days remaining' %}</h5>
+        <div class="progress">
+          <div class="progress-bar bg-success" role="progressbar" style="width: {{ session_progress }}%;" 
+               aria-valuenow="{{ session_progress }}" aria-valuemin="0" aria-valuemax="100">{{ session_progress }}%</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Students</h5>
+                    <p class="card-text display-4">{{ total_students }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Lecturers</h5>
+                    <p class="card-text display-4">{{ total_lecturers }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Courses</h5>
+                    <p class="card-text display-4">{{ total_courses }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Active Users</h5>
+                    <p class="card-text display-4">{{ total_students|add:total_lecturers }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Performance and Course Progress -->
+    <div class="row mb-4">
+        <!-- Recent Student Performance -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Student Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Course</th>
+                                    <th>Overall Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for performance in recent_performances %}
+                                <tr>
+                                    <td>{{ performance.student_name }}</td>
+                                    <td>{{ performance.course }}</td>
+                                    <td>{{ performance.overall_grade|floatformat:1 }}%</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No recent performance data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Course Progress -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Course Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Completion Rate</th>
+                                    <th>Enrollment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for progress in recent_course_progress %}
+                                <tr>
+                                    <td>{{ progress.course }}</td>
+                                    <td>{{ progress.completion_rate|floatformat:1 }}%</td>
+                                    <td>{{ progress.enrollment_count }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No recent course progress data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Trends -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Performance Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceTrendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Distribution -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Course Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="courseDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Performance Trends Chart
+    const trendsCtx = document.getElementById('performanceTrendsChart').getContext('2d');
+    new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: {{ performance_trends.labels|safe }},
+            datasets: [{
+                label: 'Student Satisfaction',
+                data: {{ performance_trends.satisfaction|safe }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'Course Completion',
+                data: {{ performance_trends.completion|safe }},
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1
+            }, {
+                label: 'Average Grades',
+                data: {{ performance_trends.grades|safe }},
+                borderColor: 'rgb(54, 162, 235)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Course Distribution Chart
+    const distributionCtx = document.getElementById('courseDistributionChart').getContext('2d');
+    new Chart(distributionCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ course_distribution|safe }}.map(course => course.title),
+            datasets: [{
+                label: 'Number of Students',
+                data: {{ course_distribution|safe }}.map(course => course.student_count),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Students'
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 
